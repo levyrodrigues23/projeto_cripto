@@ -1,8 +1,18 @@
-.container{
+.container {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 120px;
-    width: 1080px;
+    width: 100%; /* Alterado para evitar largura fixa */
+    max-width: 100%; /* Garante que o container não ultrapasse a largura da tela */
+    overflow-x: hidden; /* Remove qualquer scroll lateral */
+    padding: 0 16px; /* Adiciona espaçamento interno */
+    box-sizing: border-box; /* Inclui padding no cálculo da largura */
+}
+
+img {
+    max-width: 100%; /* Garante que a logo seja responsiva */
+    height: auto; /* Mantém a proporção da imagem */
+    object-fit: contain; /* Ajusta a imagem dentro do espaço disponível */
 }
 
