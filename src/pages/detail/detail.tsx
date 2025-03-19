@@ -1,76 +1,120 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
-import {CoinProps} from '../home/home'
+import { CoinProps } from "../home/home";
+import styles from "../detail/detail.module.css"
 
-interface ResponseData{
+interface ResponseData {
   data: CoinProps;
 }
 
-interface ErrorData{
+interface ErrorData {
   error: string;
-  
 }
 
 type DataProps = ResponseData | ErrorData;
 
 const Detail = () => {
   const { cripto } = useParams();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-const [coin, setCoin] = useState<CoinProps>()
-
+  const [coin, setCoin] = useState<CoinProps>();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function getCoin() {
-try {
+      try {
+        fetch(`https://api.coincap.io/v2/assets/${cripto}`)
+          .then((response) => response.json())
+          .then((data: DataProps) => {
+            if ("error" in data) {
+              navigate("/");
+              return;
+            }
 
-fetch(`https://api.coincap.io/v2/assets/${cripto}`)
-.then(response => response.json())
-.then((data: DataProps) => {
+            const price = Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+            });
 
- if('error' in data){
-  navigate('/')
-  return
- }
+            const priceCompact = Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+              notation: "compact",
+            });
 
- const price = Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
+            const resultData = {
+              ...data.data,
+              formatedPrice: price.format(Number(data.data.priceUsd)),
+              formatedMarket: priceCompact.format(
+                Number(data.data.marketCapUsd)
+              ),
+              formatedVolume: priceCompact.format(
+                Number(data.data.volumeUsd24Hr)
+              ),
+            };
 
-const priceCompact = Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  notation: "compact",
-});
-
-const resultData = {
-  ...data.data, 
-  formatedPrice: price.format(Number(data.data.priceUsd)),
-  formatedMarket: priceCompact.format(Number(data.data.marketCapUsd)),
-  formatedVolume: priceCompact.format(Number(data.data.volumeUsd24Hr)),
-}
-
-setCoin(resultData)
-
-
-
-  
-})
- 
-} catch (error) {
-  console.log(error)
-  navigate('/')
-}
-
+            setCoin(resultData);
+            setLoading(false);
+          });
+      } catch (error) {
+        console.log(error);
+        navigate("/");
+      }
     }
 
     getCoin();
   }, [cripto]);
 
+  if (loading || !coin) {
+    return (
+      <div className={styles.container}>
+        <h4 className={styles.center}>carregando detalhes</h4>
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <h1>pagina detalhe da moeda {cripto}</h1>
+    <div className={styles.container}>
+      <h1 className={styles.center}>{coin?.name}</h1>
+      <h1 className={styles.center}>{coin?.symbol}</h1>
+
+      <section className={styles.content}>
+        <img
+          src={`https://assets.coincap.io/assets/icons/${coin?.symbol.toLowerCase()}@2x.png`}
+          alt="logo da cripto"
+          className={styles.logo}
+        />
+
+        <h1>
+          {coin?.name} | {coin?.symbol}
+        </h1>
+
+        <p>
+          <strong>Preço: </strong> {coin?.formatedPrice}
+        </p>
+      
+
+      <a >
+        <strong>Mercado: </strong>
+        {coin?.formatedMarket}
+      </a>
+
+      <a >
+        <strong>Volume: </strong>
+        {coin?.formatedVolume}
+      </a>
+
+      <a >
+        <strong>Mudança 24h: </strong>
+        <span
+          className={
+            Number(coin?.changePercent24Hr) > 0 ? styles.profit : styles.loss
+          }
+        >
+          {Number(coin?.changePercent24Hr).toFixed(3)}
+        </span>
+      </a>
+      </section>
     </div>
   );
 };
